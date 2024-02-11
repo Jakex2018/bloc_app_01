@@ -1,35 +1,55 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Sidebar from "./components/Sidebar";
+import useStore from "./store";
+import {
+  StartPage,
+  OTPVerification,
+  Dashboard,
+  Content,
+  Followers,
+  Analytics,
+  WritePost,
+} from "./screen/index";
+function Layout() {
+  const { user } = useStore((state) => state);
+  const location = useLocation();
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+  return user?.token ? (
+    <div className="w-full h-screen">
+      <Navbar />
+      <div className="w-full h-full flex border-t pt-16">
+        <div className="hidden lg:flex">
+          <Sidebar />
+        </div>
+        <div className="w-full flex-1 px-8 py-6 overflow-y-auto">
+          <Outlet />
+        </div>
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </div>
+  ) : (
+    <Navigate to="/auth" state={{ from: location }} replace />
+  );
 }
 
-export default App
+function App() {
+  return (
+    <main className="w-full min-h-screen">
+      <Routes>
+      <Route path="/auth" element={<StartPage />} />
+        <Route path="/otp-verification" element={<OTPVerification />} />
+        <Route element={<Layout />}>
+          <Route index path="/" element={<Navigate to="/dashboard" />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/content" element={<Content />} />
+          <Route path="/followers" element={<Followers />} />
+          <Route path="/write/:postId?" element={<WritePost />} />
+        </Route>
+        
+      </Routes>
+    </main>
+  );
+}
+
+export default App;

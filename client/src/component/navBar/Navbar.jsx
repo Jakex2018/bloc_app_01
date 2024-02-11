@@ -1,21 +1,26 @@
-import { Link } from "react-router-dom";
+/* eslint-disable no-unused-vars */
+import { Link, useNavigate } from "react-router-dom";
 import {
   FaFacebook,
   FaInstagram,
   FaTwitterSquare,
   FaYoutube,
 } from "react-icons/fa";
-import { Logo } from "../index";
+import { Button, Logo } from "../index";
 import { links } from "../../utils";
 import SwitchTheme from "../SwitchTheme";
 import { useState } from "react";
-import { Profile } from "../../assets";
-import {MobileMenu} from '../index'
-
+import { MobileMenu } from "../index";
+import { useStoreTheme } from "../../store/useStore";
+import { getInitials } from "../../utils/index.js";
 const Navbar = () => {
+  const navigate=useNavigate()
+  const { user, signOut } = useStoreTheme((state) => state);
   const [showProfile, setShowProfile] = useState(false);
   const handleOut = () => {
-    localStorage.removeItem("user");
+    localStorage.removeItem("userInfo");
+    signOut();
+    navigate("/login")
   };
   return (
     <div className="flex flex-col md:flex-row items-center w-full py-5 justify-between gap-4 md:gap-0">
@@ -44,28 +49,47 @@ const Navbar = () => {
         </ul>
         <SwitchTheme />
         <div className="flex gap-1 items-center cursor-pointer">
-          <div
-            className="relative"
-            onClick={() => setShowProfile((prev) => !prev)}
-          >
-            <div className="flex gap-2 items-center cursor-pointer">
-              <img src={Profile} className="w-8 h-8 rounded-full" alt="" />
-              <span className="text-black dark:text-gray-500 font-semibold">
-                Akawasi Akante
-              </span>
-            </div>
-            {showProfile && (
-              <div className="absolute bg-white dark:bg-[#2f2d30] py-6 px-6 flex flex-col shadow-2xl z-50 right-0 gap-3 rounded">
-                <span className="dark:text-white">Profile</span>
-                <span
-                  className="border-t border-slate-300 text-rose-700"
-                  onClick={handleOut}
-                >
-                  Logout
+          {user?.token ? (
+            <div
+              className="relative"
+              onClick={() => setShowProfile((prev) => !prev)}
+            >
+              <div className="flex gap-2 items-center cursor-pointer">
+                {user?.user.image ? (
+                  <img
+                    src={user?.user.image}
+                    className="w-8 h-8 rounded-full"
+                    alt=""
+                  />
+                ) : (
+                  <span className="text-white w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                    {getInitials(user?.user.name)}
+                  </span>
+                )}
+                <span className="font-medium text-black dark:text-gray-500 uppercase">
+                  {user?.user?.name?.split(" ")[0]}
                 </span>
               </div>
-            )}
-          </div>
+              {showProfile && (
+                <div className="absolute bg-white dark:bg-[#2f2d30] py-6 px-6 flex flex-col shadow-2xl z-50 right-0 gap-3 rounded">
+                  <span className="dark:text-white">Profile</span>
+                  <span
+                    className="border-t border-slate-300 text-rose-700"
+                    onClick={handleOut}
+                  >
+                    Logout
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link to="/login">
+              <Button
+                label="Sign in"
+                styles="flex items-center justify-center bg-black dark:bg-rose-600 text-white dark:text-white text-white px-4 py-1.5 rounded-full"
+              />
+            </Link>
+          )}
         </div>
       </div>
       <div className="block md:hidden">

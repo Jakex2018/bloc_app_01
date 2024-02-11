@@ -1,11 +1,10 @@
 import { Link } from "react-router-dom";
 import { Banner, PopularWritter } from "../component/index";
-import { CATEGORIES, popular, posts } from "../utils/blogData";
+import { CATEGORIES, popular} from "../utils/blogData";
 import { Card, PopularPost, Pagination } from "../component/index";
-import { useState } from "react";
+import { usePosts } from "../hooks/post-hook";
 const Home = () => {
-  const numPages = 20;
-  const [/*page,*/ setPage] = useState(0);
+  const { posts, numPages, setPage } = usePosts({ writerId: "" });
   const randomIndex = Math.floor(Math.random() * posts.length);
   if (posts < 1)
     return (

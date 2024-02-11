@@ -2,9 +2,14 @@ import { useState } from "react";
 import { Logo, Button, Divider, Inputbox } from "../component/index";
 import { FcGoogle } from "react-icons/fc";
 import { Link } from "react-router-dom";
+import { useGoogleLogin } from "@react-oauth/google";
+import { emailLogin, getGoogleSignin } from "../utils/apiCalls";
+import { saveUserInfo } from "../utils";
+import { toast } from "sonner";
+import { useStoreTheme } from "../store/useStore";
 
 const LoginPage = () => {
-  const user = {};
+  const { user, signIn, setisLoading } = useStoreTheme();
   const [data, setData] = useState({
     email: "",
     password: "",
@@ -12,12 +17,33 @@ const LoginPage = () => {
   if (user.token) window.location.replace("/");
 
   const handleChangeLogin = (e) => {
-    const name= e.target.name;
-    const value= e.target.value;
+    const name = e.target.name;
+    const value = e.target.value;
     setData({ ...data, [name]: value });
   };
-  const googleLogin = async () => {};
-  const handleSubmit = async () => {};
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setisLoading(true);
+      const user = await getGoogleSignin(tokenResponse.access_token);
+      setisLoading(false);
+      if (user.success === true) {
+        saveUserInfo(user, signIn);
+      } else {
+        toast.error(user?.message);
+      }
+    },
+  });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setisLoading(true);
+    const result = await emailLogin(data);
+    setisLoading(false);
+    if (result?.success === true) {
+      saveUserInfo(result, signIn);
+    } else {
+      toast.error(result?.message);
+    }
+  };
   return (
     <div className="flex w-full h-[100vh]">
       <div className="hidden md:flex flex-col gap-y-4 w-2/5 min-h-screen bg-black items-center justify-center">
@@ -38,7 +64,9 @@ const LoginPage = () => {
             <Button
               label="Sign in with google"
               type="button"
-              onClick={() => {}}
+              onClick={() => {
+                googleLogin();
+              }}
               icon={<FcGoogle />}
               styles="w-full flex flex-row-reverse gap-4 bg-white dark:bg-transparent dark:text-white rounded-full px-5 py-2.5 text-black border border-gray-300"
             />
@@ -56,7 +84,7 @@ const LoginPage = () => {
                 <Inputbox
                   label="Password"
                   name="password"
-                  type="text"
+                  type="password"
                   placeholder="Enter your password"
                   value={data?.password}
                   onChange={handleChangeLogin}
@@ -64,7 +92,6 @@ const LoginPage = () => {
                 <Button
                   label="Sign in"
                   styles="group dark:bg-rose-800 mt-8 dark:text-white bg-black px-5 py-2.5 w-full relative flex justify-center border border-transparent text-sm font-medium rounded-full hover:bg-rose-700 focus:outline-none "
-                  onClick={() => googleLogin()}
                   type="submit"
                 />
               </div>

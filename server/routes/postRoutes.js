@@ -30,9 +30,9 @@ postRoutes.patch("/update/:id", userAuth, updatePost);
 
 //get posts router
 postRoutes.get("/", getPosts);
-postRoutes.get("/popular", userAuth, getPopularPost);
-postRoutes.get("/:postId", userAuth, getPost);
-postRoutes.get("/comments/:postId", userAuth, getComments);
+postRoutes.get("/popular",getPopularPost);
+postRoutes.get("/:postId",  getPost);
+postRoutes.get("/comments/:postId",  getComments);
 
 //delete post router
 postRoutes.delete("/:id", userAuth, deletePost);

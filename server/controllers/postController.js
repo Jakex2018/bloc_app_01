@@ -8,8 +8,8 @@ import Comments from "../models/commentModel.js";
 export const stats = async (req, res, next) => {
   try {
     const { query } = req.query;
-    const { userId } = req.user.user;
-    const numDays = Number(query) || 30;
+    const { userId } = req.body.user;
+    const numDays = Number(query) || 28;
     const currentDate = new Date();
     const startDate = new Date();
     startDate.setDate(currentDate.getDate() - numDays);
@@ -26,8 +26,8 @@ export const stats = async (req, res, next) => {
     const totalWritters = await User.find({
       accountType: "Writer",
     }).countDocuments();
-    const totalFollowers = User.findById(userId);
-    const viewStats = Views.aggregate([
+    const totalFollowers = await User.findById(userId);
+    const viewStats = await Views.aggregate([
       {
         $match: {
           user: new mongoose.Types.ObjectId(userId),
@@ -70,7 +70,7 @@ export const stats = async (req, res, next) => {
         select: "name email image accountType followers password",
       },
     });
-    const lastPosts = await Posts.findById({ user: userId })
+    const lastPosts = await Posts.find({ user: userId })
       .limit(5)
       .sort({ _id: -1 });
 
@@ -135,7 +135,7 @@ export const getPostContent = async (req, res, next) => {
 
     //records count
     const totalPost = await Posts.countDocuments({ user: userId });
-    const numPage = Math.cell(totalPost / limit);
+    const numPage = Math.ceil(totalPost / limit);
 
     queryResult = queryResult.skip(skip).limit(limit);
     const posts = await queryResult;
@@ -381,7 +381,6 @@ export const deletePost = async (req, res, next) => {
   try {
     const { userId } = req.body.user;
     const { id } = req.params;
-    console.log(userId, id);
     await Posts.findByIdAndDelete({ _id: id, user: userId });
     res.status(200).json({
       success: true,

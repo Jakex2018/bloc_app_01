@@ -22,7 +22,7 @@ export const register = async (req, res, next) => {
       accountType,
       provider,
     });
-  
+
     user.password = undefined;
     ///if (!user) return next("Error Credentials, Please Try Again");
     const token = createJWT(user?._id);
@@ -42,31 +42,28 @@ export const register = async (req, res, next) => {
   }
 };
 export const googleSignup = async (req, res) => {
-  const { name, email, image, emailVerified } = req.body;
-  const userExist = await Users.findOne({
-    email,
-  });
-  if (userExist) return next("This email already exits");
-  const user = Users.create({
-    name,
-    email,
-    image,
-    provider: "Google",
-    emailVerified,
-  });
-  user.password = undefined;
-  const token = createJWT(user._id);
-  if (accountType === "writer") {
-    sendVerificationEmail(user, res, token);
-  } else {
+  try {
+    const { name, email, image, emailVerified } = req.body;
+    const userExist = await Users.findOne({
+      email,
+    });
+    if (userExist) return next("This email already exits");
+    const user = Users.create({
+      name,
+      email,
+      image,
+      provider: "Google",
+      emailVerified,
+    });
+    user.password = undefined;
+    const token = createJWT(user._id);
+
     res.status(201).json({
       success: true,
       message: "Account created successfully",
       user,
       token,
     });
-  }
-  try {
   } catch (error) {
     console.log(error);
     res.status(404).json({ message: error.message });
@@ -92,7 +89,7 @@ export const login = async (req, res, next) => {
     if (!isMatch) return next("Invalid email or password");
     if (user?.accountType === "Writer" && !user?.emailVerify)
       return next("Please verify your email address");
-    user.password= undefined;
+    user.password = undefined;
     const token = createJWT(user?._id);
     return res.status(200).json({
       success: true,
@@ -105,3 +102,16 @@ export const login = async (req, res, next) => {
     res.status(404).json({ message: error.message });
   }
 };
+
+/*
+if (accountType === "writer") {
+    sendVerificationEmail(user, res, token);
+  } else {
+    res.status(201).json({
+      success: true,
+      message: "Account created successfully",
+      user,
+      token,
+    });
+  }
+*/

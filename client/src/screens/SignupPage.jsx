@@ -1,14 +1,17 @@
-import { useState } from "react";
+/* eslint-disable no-unused-vars */
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Logo, Button, Inputbox } from "../component/index";
+import { Logo, Button, Inputbox, Divider } from "../component/index";
 import { FcGoogle } from "react-icons/fc";
-
-import {BiImage} from 'react-icons/bi'
-///import {FcGoogle} from 'react-icons/fc'
+import { BiImage } from "react-icons/bi";
 import { IoArrowBackCircleSharp } from "react-icons/io5";
 import { Toaster, toast } from "sonner";
+import { emailSignUp, getGoogleSignup } from "../utils/apiCalls";
+import { useGoogleLogin } from "@react-oauth/google";
+import { useStoreTheme } from "../store/useStore";
+import { saveUserInfo, uploadFile } from "../utils";
 const SignupPage = () => {
-  const user = {};
+  const { user, signIn, setisLoading } = useStoreTheme();
   const [showForm, setShowForm] = useState(false);
   const [data, setData] = useState({
     firstName: "",
@@ -16,22 +19,46 @@ const SignupPage = () => {
     email: "",
     password: "",
   });
-  if (user.token) window.location.replace("/");
+
   toast.success("Login");
   const [file, setFile] = useState("");
-  const [fileURL, /*setFileURL*/] = useState("");
-
+  const [fileURL, setFileURL] = useState("");
   const handleChangeRegister = (e) => {
     const name = e.target.name;
     const value = e.target.value;
     setData({ ...data, [name]: value });
   };
-  const googleRegister = async () => {};
-  const handleSubmit = async () => {};
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setisLoading(true);
+      const user = await getGoogleSignup(tokenResponse.access_token);
+      setisLoading(false);
+      if (user.success === true) {
+        saveUserInfo(user, signIn);
+      } else {
+        toast.error(user?.message);
+      }
+    },
+  });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setisLoading(true);
+    const result = await emailSignUp({ ...data, image: fileURL });
+    setisLoading(false);
+    if (result?.success === true) {
+      saveUserInfo(result, signIn);
+    } else {
+      toast.error(result?.message);
+    }
+  };
+  if (user.token) window.location.replace("/");
+  useEffect(() => {
+    file && uploadFile(setFileURL, file);
+  }, [file]);
   return (
     <div className="flex w-full h-[100vh]">
       <div className="hidden md:flex flex-col gap-y-4 w-2/5 min-h-screen bg-black items-center justify-center">
-        {fileURL && <img src={fileURL || file} alt="" />}
+        {fileURL && <img src={fileURL || file} alt="" className="w-16 h-16 rounded-full" />}
         <Logo type="login" />
         <span className="text-xl font-semibold text-white">Welcome, back!</span>
       </div>
@@ -61,16 +88,18 @@ const SignupPage = () => {
                       label="First Name"
                       name="firstName"
                       type="text"
+                      isRequired={true}
                       placeholder="Your first name"
-                      value={data?.firstName}
+                      value={data.firstName}
                       onChange={handleChangeRegister}
                     />
                     <Inputbox
                       label="Last Name"
                       name="lastName"
                       type="text"
+                      isRequired={true}
                       placeholder="Your Last Name"
-                      value={data?.lastName}
+                      value={data.lastName}
                       onChange={handleChangeRegister}
                     />
                   </div>
@@ -78,19 +107,21 @@ const SignupPage = () => {
                     label="Email Adress"
                     name="email"
                     type="text"
+                    isRequired={true}
                     placeholder="you@example.com"
-                    value={data?.email}
+                    value={data.email}
                     onChange={handleChangeRegister}
                   />
                   <Inputbox
                     label="Password"
                     name="password"
                     type="text"
+                    isRequired={true}
                     placeholder="Enter your password"
-                    value={data?.password}
+                    value={data.password}
                     onChange={handleChangeRegister}
                   />
-                  <div className='flex items-center justify-between py-4'>
+                  <div className="flex items-center justify-between py-4">
                     <label
                       className="flex items-center gap-1 text-base text-black dark:text-gray-500 cursor-pointer"
                       htmlFor="imgUpload"
@@ -110,23 +141,28 @@ const SignupPage = () => {
                   <Button
                     label="Create Account"
                     styles="group dark:bg-rose-800 mt-8 dark:text-white bg-black px-5 py-2.5 w-full relative flex justify-center border border-transparent text-sm font-medium rounded-full hover:bg-rose-700 focus:outline-none "
-                    onClick={() => googleRegister()}
                     type="submit"
                   />
                 </div>
               </form>
             ) : (
-              <div className="max-w-md w-full space-y-8">
-                <Button
-                  label="Sign up with google"
-                  type="button"
-                  onClick={() => {
-                    setShowForm(true);
-                  }}
-                  icon={<FcGoogle />}
-                  styles="w-full flex flex-row-reverse gap-4 bg-white dark:bg-transparent dark:text-white rounded-full px-5 py-2.5 text-black border border-gray-300"
-                />
-              </div>
+              <>
+                <div className="max-w-md w-full space-y-8">
+                  <Button
+                    label="Sign up with google"
+                    type="button"
+                    onClick={() => googleLogin()}
+                    icon={<FcGoogle />}
+                    styles="w-full flex flex-row-reverse gap-4 bg-white dark:bg-transparent dark:text-white rounded-full px-5 py-2.5 text-black border border-gray-300"
+                  />
+                  <Divider label="OR" />
+                  <Button
+                    label="Continue with email"
+                    onClick={() => setShowForm(true)}
+                    styles="w-full gap-4 bg-white text-black dark:bg-rose-800 dark:text-white rounded-full px-5 py-2.5 text-black"
+                  />
+                </div>
+              </>
             )}
             <div className=" flex items-center justify-center text-gray-600 dark:text-gray-300">
               <p>
